@@ -18,13 +18,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 class FichierController extends AbstractController
 {
     /**
-     * @Route("/api/fichier/new", name="fichier_new", methods={"GET","POST"})
+     * @Route("/api/fichiers/new", name="fichier_new", methods={"POST"})
      */
     public function new(Request $request, UtilisateurRepository $utilisateurRepo, EntityManagerInterface $entityManager): Response
     {
         $id = $request->get('id');
 
-        $utilisateur = $utilisateurRepo->findById($id);
+        $utilisateur = $utilisateurRepo->findById(['id' =>$id]);
        
         /** @var UploadedFile $file */
         $file = $request->files->get('lien');
@@ -33,7 +33,7 @@ class FichierController extends AbstractController
         $destination = $this->getParameter('kernel.project_dir').'/public/files';
 
         $dest = '/public/files/';
-        dd($file->move($destination, $newFile));
+        $file->move($destination, $newFile);
         $fichier = new Fichier();
         $fichier->setNom($request->get('nom'))
                 ->setDescription($request->get('description'))
@@ -50,17 +50,18 @@ class FichierController extends AbstractController
     }
 
     /**
-     * @Route("/api/fichier/show", name="fichier_index", methods={"GET"})
+     * @Route("/api/fichiers/show", name="fichier_index", methods={"GET"})
      */
     public function index(FichierRepository $fichierRepository): Response
     {
+
         return $this->json($fichierRepository->findAll(), 200);
     }
 
     /**
-     * @Route("/api/fichier/show/{id}", name="fichier_show", methods={"GET"})
+     * @Route("/api/fichiers/show/{id}", name="fichier_show", methods={"GET"})
      */
-    public function show($id): Response
+    public function show($id, Request $request): Response
     {
         $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
         if (!$fichier) {
@@ -72,16 +73,16 @@ class FichierController extends AbstractController
     }
 
     /**
-     * @Route("/api/fichier/edit/{id}", name="fichier_edit", methods={"GET","PUT"})
+     * @Route("/api/fichiers/edit/{id}", name="fichier_edit", methods={"GET","PUT"})
      */
-    public function edit($id, Request $request, Fichier $fichier, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Fichier $fichier, EntityManagerInterface $entityManager): Response
     {
-        $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
-        if (!$fichier) {
-            throw $this->createNotFoundException(
-                'Aucun fichier trouvé pour cet id : '.$id
-            );
-        }
+        // $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
+        // if (!$fichier) {
+        //     throw $this->createNotFoundException(
+        //         'Aucun fichier trouvé pour cet id : '.$id
+        //     );
+        // }
         $form = $this->createForm(FichierType::class, $fichier);
         $form->handleRequest($request);
 
@@ -98,7 +99,7 @@ class FichierController extends AbstractController
     }
 
     /**
-     * @Route("/api/fichier/del/{id}", name="fichier_delete", methods={"DELETE"})
+     * @Route("/api/fichiers/del/{id}", name="fichier_delete", methods={"GET", "DELETE"})
      */
     public function delete($id): Response
     {

@@ -4,12 +4,13 @@ namespace App\Entity;
 
 // use App\Entity\Model;
 // use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Utilisateur;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\FichierRepository;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Mapping\Annotation\Timestampable;
-use Gedmo\Timestampable\Traits\TimestampableEntity;
 // use Symfony\Component\HttpFoundation\File\File;
+use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
