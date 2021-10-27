@@ -6,10 +6,11 @@ namespace App\Entity;
 // use ApiPlatform\Core\Annotation\ApiResource;
 use App\Entity\Utilisateur;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\Column;
 use App\Repository\FichierRepository;
 use Gedmo\Mapping\Annotation as Gedmo;
-use Gedmo\Mapping\Annotation\Timestampable;
 // use Symfony\Component\HttpFoundation\File\File;
+use Gedmo\Mapping\Annotation\Timestampable;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -49,7 +50,7 @@ class Fichier
     private $Lien;
 
     /**
-     * @ORM\ManyToOne(targetEntity=fichier::class, inversedBy="fichiers")
+     * @ORM\ManyToOne(targetEntity=Utilisateur::class, inversedBy="fichiers")
      * @ORM\JoinColumn(nullable=false)
      * @Groups("fichier:read")
      */
@@ -71,6 +72,11 @@ class Fichier
      * @Groups("fichier:read")
      */
     private $updatedAt;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $visible;
 
     public function getId(): ?int
     {
@@ -117,7 +123,7 @@ class Fichier
     {
         return $this->utilisateur;
     }
-
+   
     public function setUtilisateur(?Utilisateur $utilisateur): self
     {
         $this->utilisateur = $utilisateur;
@@ -141,6 +147,18 @@ class Fichier
     public function setUpdatedAt(?\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function getVisible(): ?string
+    {
+        return $this->visible;
+    }
+
+    public function setVisible(string $visible): self
+    {
+        $this->visible = $visible;
+
         return $this;
     }
 }

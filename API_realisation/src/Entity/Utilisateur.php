@@ -66,6 +66,11 @@ class Utilisateur
     private $Telephone;
 
     /**
+     * @ORM\OneToMany(targetEntity=Fichier::class, mappedBy="utilisateur", orphanRemoval=true)
+     */
+    private $fichiers;
+
+    /**
      * @Gedmo\Timestampable(on="create")
      * @ORM\Column(type="datetime")
      * @Groups("utilisateur:read")

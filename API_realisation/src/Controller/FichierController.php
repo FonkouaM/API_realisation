@@ -11,8 +11,12 @@ use App\Repository\UtilisateurRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
 
 
 class FichierController extends AbstractController
@@ -24,15 +28,17 @@ class FichierController extends AbstractController
     {
         $id = $request->get('id');
 
-        $utilisateur = $utilisateurRepo->findById(['id' =>$id]);
-       
+        $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
+
+
+    //    dd($utilisateur);
         /** @var UploadedFile $file */
         $file = $request->files->get('lien');
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $newFile = Urlizer::urlize($originalFilename).'-'.uniqid().'.'.$file->guessExtension();
         $destination = $this->getParameter('kernel.project_dir').'/public/files';
 
-        $dest = '/public/files/';
+        $dest = '/files/';
         $file->move($destination, $newFile);
         $fichier = new Fichier();
         $fichier->setNom($request->get('nom'))
@@ -44,7 +50,7 @@ class FichierController extends AbstractController
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($fichier);
         $entityManager->flush();
-
+        
         // dd($fichier);
         return $this->json([['Fichier cree avec success'], $fichier], 201);
     }
@@ -73,29 +79,40 @@ class FichierController extends AbstractController
     }
 
     /**
-     * @Route("/api/fichiers/edit/{id}", name="fichier_edit", methods={"GET","PUT"})
+     * @Route("/api/fichiers/edit/{id}", name="fichier_edit", methods={"POST","PUT"})
      */
-    public function edit(Request $request, Fichier $fichier, EntityManagerInterface $entityManager): Response
+    public function edit(?Fichier $fichier, Request $request, UtilisateurRepository $utilisateurRepo, $id): Response
     {
-        // $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
-        // if (!$fichier) {
-        //     throw $this->createNotFoundException(
-        //         'Aucun fichier trouvé pour cet id : '.$id
-        //     );
-        // }
-        $form = $this->createForm(FichierType::class, $fichier);
-        $form->handleRequest($request);
+            $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
+            if (!$fichier) {
+                throw $this->createNotFoundException(
+                    'Aucun fichier trouvé pour cet id : '.$id
+                );
+            }else{
+            $id = $request->get('id');
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
+    
+            /** @var UploadedFile $file */
+            $file = $request->files->get('lien');
+            $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $newFile = Urlizer::urlize($originalFilename).'-'.uniqid().'.'.$file->guessExtension();
+            $destination = $this->getParameter('kernel.project_dir').'/public/files';
+    
+            $dest = '/files/';
+            $file->move($destination, $newFile);
+            // $fichier = new Fichier();
+            $fichier->setNom($request->get('nom'))
+                    ->setDescription($request->get('description'))
+                    ->setLien($dest.$newFile);
+                    // ->setUtilisateur($utilisateur[0]);
 
-            return $this->redirectToRoute('fichier_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->renderForm('fichier/edit.html.twig', [
-            'fichier' => $fichier,
-            'form' => $form,
-        ]);
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($fichier);
+            $entityManager->flush();
+            }
+           
+        return $this->json([['Fichier modifie avec success'], $fichier]);
     }
 
     /**
