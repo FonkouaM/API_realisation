@@ -30,6 +30,7 @@ class FichierController extends AbstractController
 
         $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
 
+        $visible = $fichierRepository->findByOne('visible');
 
     //    dd($utilisateur);
         /** @var UploadedFile $file */
@@ -44,8 +45,8 @@ class FichierController extends AbstractController
         $fichier->setNom($request->get('nom'))
                 ->setDescription($request->get('description'))
                 ->setLien($dest.$newFile)
-                ->setUtilisateur($utilisateur[0]);
-                // ->setVisible($request->get($visible));
+                ->setUtilisateur($utilisateur[0])
+                ->setVisible($request->get());
 
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -107,7 +108,7 @@ class FichierController extends AbstractController
                     ->setDescription($request->get('description'))
                     ->setLien($dest.$newFile);
                     // ->setUtilisateur($utilisateur[0])
-                    // ->setVisible($request->get($visible));
+                    // ->setVisible($request->get());
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($fichier);

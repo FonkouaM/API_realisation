@@ -160,15 +160,15 @@ class Fichier
         return $this->visible;
     }
 
-    // /**
-    //  * set visible
-    //  * @param string $visible
-    //  * @return Fichier
-    //  */
+    /**
+     * set visible
+     * @param string $visible
+     * @return Fichier
+     */
     public function setVisible(string $visible): self
     {
         $this->visible = ($visible === 'actif' || $visible === 'inactif')? 
-        $visible : 'actif' ;
+        'actif' : $visible;
 
         return $this;
     }
