@@ -58,9 +58,9 @@ class Fichier
 
     /**
      * @var string
-     * @ORM\Column(name="visible", type="string", length=255, options={"default" : "actif"})
+     * @ORM\Column(type="string", length=255)
      */
-    private $visible = 'actif';
+    private $visible;
 
     /**
      * @return \DateTime
@@ -78,11 +78,12 @@ class Fichier
      */
     private $updatedAt;
 
-
-    public function __construct(){
-        $this->visible = 'actif';
-    }
-
+    public const VISIBLE_ARRAY = array(
+        "ACTIF" => "actif",  
+        "INACTIF" => "inactif"
+    );
+   
+   
     public function getId(): ?int
     {
         return $this->id;
@@ -160,16 +161,12 @@ class Fichier
         return $this->visible;
     }
 
-    // /**
-    //  * set visible
-    //  * @param string $visible
-    //  * @return Fichier
-    //  */
     public function setVisible(string $visible): self
     {
         $this->visible = ($visible === 'actif' || $visible === 'inactif')? 
         $visible : 'actif' ;
 
-        return $this;
+        return  $this;
     }
+
 }

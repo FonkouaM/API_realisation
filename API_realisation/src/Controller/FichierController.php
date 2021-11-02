@@ -30,23 +30,22 @@ class FichierController extends AbstractController
 
         $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
 
-
     //    dd($utilisateur);
         /** @var UploadedFile $file */
         $file = $request->files->get('lien');
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $newFile = Urlizer::urlize($originalFilename).'-'.uniqid().'.'.$file->guessExtension();
         $destination = $this->getParameter('kernel.project_dir').'/public/files';
-
+      
         $dest = '/files/';
         $file->move($destination, $newFile);
         $fichier = new Fichier();
         $fichier->setNom($request->get('nom'))
                 ->setDescription($request->get('description'))
                 ->setLien($dest.$newFile)
-                ->setUtilisateur($utilisateur[0]);
-                // ->setVisible($request->get($visible));
-
+                ->setUtilisateur($utilisateur[0])
+                ->setVisible("");
+      
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($fichier);
@@ -111,6 +110,8 @@ class FichierController extends AbstractController
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($fichier);
+            $entityManager->flush();$entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($fichier);
             $entityManager->flush();
             }
            
@@ -120,19 +121,25 @@ class FichierController extends AbstractController
     /**
      * @Route("/api/fichiers/del/{id}", name="fichier_delete", methods={"GET", "DELETE"})
      */
-    public function delete($id): Response
+    public function delete($id, EntityManagerInterface $entityManager): Response
     {
         $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
+
+        //dd($fichier);
         if (!$fichier) {
             throw $this->createNotFoundException(
                 'Aucun fichier trouvé pour cet id : '.$id
             );
+        }else{
+            $fichier->setVisible(Fichier::VISIBLE_ARRAY['INACTIF']);
         }
-        // if ($this->isCsrfTokenValid('delete'.$fichier->getId(), $request->request->get('_token'))) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->remove($fichier);
-            $entityManager->flush();
-        // }
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($fichier);
+        $entityManager->flush();;
 
-        return $this->json(['Fichier supprime avec success'], Response::HTTP_SEE_OTHER);    }
+        // dd($fichier);
+
+        return $this->json(['Fichier '.$id. ' supprime avec success'], Response::HTTP_SEE_OTHER); 
+    }
+
 }
