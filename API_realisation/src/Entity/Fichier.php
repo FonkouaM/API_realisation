@@ -58,9 +58,9 @@ class Fichier
 
     /**
      * @var string
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, options={"default" : "actif"})
      */
-    private $visible;
+    private $visible = 'actif';
 
     /**
      * @return \DateTime

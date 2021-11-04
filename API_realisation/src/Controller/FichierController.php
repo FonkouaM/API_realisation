@@ -44,7 +44,7 @@ class FichierController extends AbstractController
                 ->setDescription($request->get('description'))
                 ->setLien($dest.$newFile)
                 ->setUtilisateur($utilisateur[0])
-                ->setVisible("");
+                ->setVisible(Fichier::VISIBLE_ARRAY['ACTIF']);
       
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -56,65 +56,69 @@ class FichierController extends AbstractController
     }
 
     /**
-     * @Route("/api/fichiers/show", name="fichier_index", methods={"GET"})
+     * @Route("/api/fichiers/show", name="fichier_show_visible", methods={"GET"})
      */
-    public function index(FichierRepository $fichierRepository): Response
+    public function show_visible(FichierRepository $fichiersRepo): Response
     {
+        $fichier = $fichiersRepo->selectFichiersVisible();
+        
+      
 
-        return $this->json($fichierRepository->findAll(), 200);
+        return $this->json($fichier, 200);
     }
 
     /**
-     * @Route("/api/fichiers/show/{id}", name="fichier_show", methods={"GET"})
+     * @Route("/api/fichiers/utilisateur/{id}", name="fichier_view_visible", methods={"GET"})
      */
-    public function show($id, Request $request): Response
+    public function view_visible(FichierRepository $fichiersRepo, $id): Response
     {
-        $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
+        $fichier = $fichiersRepo->FichiersUtilisateur($id);
+
         if (!$fichier) {
             throw $this->createNotFoundException(
                 'Aucun fichier trouvé pour cet id : '.$id
             );
         }
+        dd($fichier);
         return $this->json($fichier, 200);
     }
 
     /**
-     * @Route("/api/fichiers/edit/{id}", name="fichier_edit", methods={"POST","PUT"})
+     * @Route("/api/fichiers/edit/{id}", name="fichier_edit", methods={"GET","POST","PUT"})
      */
-    public function edit(?Fichier $fichier, Request $request, UtilisateurRepository $utilisateurRepo, $id): Response
+    public function edit( $id, FichierRepository $fichiersRepo, Request $request, UtilisateurRepository $utilisateurRepo): Response
     {
-            $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
-            if (!$fichier) {
-                throw $this->createNotFoundException(
-                    'Aucun fichier trouvé pour cet id : '.$id
-                );
-            }else{
-            $id = $request->get('id');
+        $fichier = $fichiersRepo->FichierUpdate($id);
+        
+        if (!$fichier) {
+            throw $this->createNotFoundException(
+                'Aucun fichier trouvé pour cet id : '.$id
+            );
+        }else{
+        // $id = $request->get('id');
 
-            $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
-    
-            /** @var UploadedFile $file */
-            $file = $request->files->get('lien');
-            $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $newFile = Urlizer::urlize($originalFilename).'-'.uniqid().'.'.$file->guessExtension();
-            $destination = $this->getParameter('kernel.project_dir').'/public/files';
-    
-            $dest = '/files/';
-            $file->move($destination, $newFile);
-            // $fichier = new Fichier();
-            $fichier->setNom($request->get('nom'))
-                    ->setDescription($request->get('description'))
-                    ->setLien($dest.$newFile);
-                    // ->setUtilisateur($utilisateur[0])
-                    // ->setVisible($request->get($visible));
+        // $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
 
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($fichier);
-            $entityManager->flush();$entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($fichier);
-            $entityManager->flush();
-            }
-           
+        /** @var UploadedFile $file */
+        $file = $request->files->get('lien');
+        $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $newFile = Urlizer::urlize($originalFilename).'-'.uniqid().'.'.$file->guessExtension();
+        $destination = $this->getParameter('kernel.project_dir').'/public/files';
+
+        $dest = '/files/';
+        $file->move($destination, $newFile);
+        // $fichier = new Fichier();
+        $fichier[0]->setNom($request->get('nom'))
+                ->setDescription($request->get('description'))
+                ->setLien($dest.$newFile);
+                // ->setUtilisateur($utilisateur[0])
+                // ->setVisible($request->get($visible));
+               
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($fichier[0]);
+        $entityManager->flush();
+        }
+        // dd($fichier);
         return $this->json([['Fichier modifie avec success'], $fichier]);
     }
 
@@ -142,4 +146,27 @@ class FichierController extends AbstractController
         return $this->json(['Fichier '.$id. ' supprime avec success'], Response::HTTP_SEE_OTHER); 
     }
 
+    
+      // /**
+    //  * @Route("/api/fichiers", name="fichier_index", methods={"GET"})
+    //  */
+    // public function index(FichierRepository $fichierRepository): Response
+    // {
+
+    //     return $this->json($fichierRepository->findAll(), 200);
+    // }
+
+    // /**
+    //  * @Route("/api/fichiers/{id}", name="fichier_show", methods={"GET"})
+    //  */
+    // public function show($id, Request $request): Response
+    // {
+    //     $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
+    //     if (!$fichier) {
+    //         throw $this->createNotFoundException(
+    //             'Aucun fichier trouvé pour cet id : '.$id
+    //         );
+    //     }
+    //     return $this->json($fichier, 200);
+    // }
 }

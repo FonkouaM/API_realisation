@@ -47,4 +47,38 @@ class FichierRepository extends ServiceEntityRepository
         ;
     }
     */
+
+   /**
+    * @Return files visible
+    */
+    public function selectFichiersVisible()
+    {
+       $query = $this->getEntityManager()->createQuery("SELECT f FROM App\Entity\Fichier f WHERE f.visible = 'actif' ");
+            
+       return $query->getResult();
+    }
+    
+    /**
+    * Return files visible_utilisateurid
+    */
+    public function FichiersUtilisateur($id)
+    {
+       $query = $this->getEntityManager()->createQuery("SELECT f FROM App\Entity\Fichier f WHERE f.visible = 'actif' AND f.utilisateur = $id ");
+        // $query = $this->createQueryBuilder('f');
+        // $query->from('Fichier', 'f')
+        //       ->where('f.visible = actif')
+        //       ->andWhere('f.utilisateur', $id);
+       return $query->getResult();
+    }
+
+    /**
+    * Return files visible_update
+    */
+    public function FichierUpdate($id)
+    {
+        $query = $this->getEntityManager()->createQuery("SELECT f FROM App\Entity\Fichier f WHERE f.visible = 'actif' AND f.id = $id ");
+         
+        return $query->getResult();
+    }
+
 }
