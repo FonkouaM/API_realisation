@@ -27,7 +27,6 @@ class UtilisateurController extends AbstractController
         $em->persist($utilisateur);
         $em->flush();
 
-        // dd($utilisateur);
        return $this->json(['Utilisateur cree avec success'], 201);
     }
 
@@ -45,6 +44,7 @@ class UtilisateurController extends AbstractController
     public function show($id): Response
     {
         $utilisateur = $this->getDoctrine()->getRepository(Utilisateur::class)->find($id);
+        dd($utilisateur->getId());
         if (!$utilisateur) {
             throw $this->createNotFoundException(
                 'Aucun utilisateur trouvé pour cet id : '.$id

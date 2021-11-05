@@ -64,10 +64,7 @@ class FichierRepository extends ServiceEntityRepository
     public function FichiersUtilisateur($id)
     {
        $query = $this->getEntityManager()->createQuery("SELECT f FROM App\Entity\Fichier f WHERE f.visible = 'actif' AND f.utilisateur = $id ");
-        // $query = $this->createQueryBuilder('f');
-        // $query->from('Fichier', 'f')
-        //       ->where('f.visible = actif')
-        //       ->andWhere('f.utilisateur', $id);
+      
        return $query->getResult();
     }
 
