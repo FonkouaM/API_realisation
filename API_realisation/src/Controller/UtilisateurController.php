@@ -44,7 +44,7 @@ class UtilisateurController extends AbstractController
     public function show($id): Response
     {
         $utilisateur = $this->getDoctrine()->getRepository(Utilisateur::class)->find($id);
-        dd($utilisateur->getId());
+
         if (!$utilisateur) {
             throw $this->createNotFoundException(
                 'Aucun utilisateur trouvé pour cet id : '.$id
