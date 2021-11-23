@@ -18,8 +18,28 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
+        login:
+            pattern: ^/api/generate_token
+            stateless: true
+            # anonymous: true
+            json_login:
+                check_path: generate_token
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            
+        api:
+            pattern: ^/api
+            stateless: true
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
+
         main:
             lazy: true
+            # anonymous: true
             provider: app_user_provider
             # custom_authenticator: App\Security\UtilisateurAuthenticator
 
@@ -33,4 +53,11 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/api/generate_token, roles: ROLE_USER}
+        - { path: ^/api/utilisateurs/list, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/utilisateurs/list/id, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/fichiers/new, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/fichiers/show, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/fichiers/utilisateur/id, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/fichiers/edit/id, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/fichiers/del/id, roles: IS_AUTHENTICATED_FULLY }

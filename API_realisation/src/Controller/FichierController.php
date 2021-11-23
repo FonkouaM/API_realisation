@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Fichier;
 use App\Form\FichierType;
-use App\Entity\Utilisateur;
 use Gedmo\Sluggable\Util\Urlizer;
 use App\Repository\FichierRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,6 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -31,6 +31,7 @@ class FichierController extends AbstractController
 
         $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
 
+    //    dd($utilisateur);
         /** @var UploadedFile $file */
         $file = $request->files->get('lien');
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -46,12 +47,13 @@ class FichierController extends AbstractController
                 ->setUtilisateur($utilisateur[0])
                 ->setVisible(Fichier::VISIBLE_ARRAY['ACTIF']);
       
-
+        $status = 201;
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($fichier);
         $entityManager->flush();
-        
-        return $this->json([['Fichier cree avec success'], $fichier], 201);
+       
+        // dd($fichier);
+        return $this->json(['status' => $status,'message' =>'Fichier cree avec success', 'details du fichier'=>$fichier]);
     }
 
     /**
@@ -60,8 +62,10 @@ class FichierController extends AbstractController
     public function show_visible(FichierRepository $fichiersRepo): Response
     {
         $fichier = $fichiersRepo->selectFichiersVisible();
+        
+        $status = 200;
 
-        return $this->json($fichier, 200);
+        return $this->json(['status' => $status,'message' =>$fichier]);
     }
 
     /**
@@ -70,36 +74,42 @@ class FichierController extends AbstractController
     public function view_visible(FichierRepository $fichiersRepo, $id): Response
     {
         $fichier = $fichiersRepo->FichiersUtilisateur($id);
-
+        $status = 200;
         if (!$fichier) {
-            throw $this->createNotFoundException(
-                'Aucun fichier trouvé pour cet id : '.$id
-            );
+            $status = 404;
+            $message =  'Aucun fichier trouvé pour cet id : '.$id;
+            
+            return $this->json(['status'=>$status,'message'=> $message]);
         }
-        
-        return $this->json($fichier, 200);
+        // dd($fichier);
+        return $this->json(['status' => $status,'message' =>$fichier]);
     }
 
     /**
      * @Route("/api/fichiers/edit/{id}", name="fichier_edit", methods={"POST","PUT"})
      */
-    public function edit( $id, FichierRepository $fichiersRepo, Request $request, UtilisateurRepository $utilisateurRepo): Response
+    public function edit( $id, FichierRepository $fichiersRepo, Request $request, UtilisateurRepository $utilisateurRepo, ValidatorInterface $validator): Response
     {
+
         $user_id = $request->get('user_id');
         $utilisateur = $utilisateurRepo->findById(['user_id'=>$user_id]);
         $fichier = $fichiersRepo->FichierUpdate($id);
-       
+        // $errors = $validator->validate($fichier);
         if (!$fichier) {
-            throw $this->createNotFoundException(
-                'Aucun fichier trouvé pour cet id : '.$id
-            );
+            $status = 404;
+            $message =  'Aucun fichier trouvé pour cet id : '.$id;
+            
+            return $this->json(['status'=>$status,'message'=> $message]);
+
         }elseif 
         ($fichier[0]->getUtilisateur()->getId() != $user_id) {
-            throw $this->createNotFoundException(
-                'Le fichier ' .$id. ' ne vous appartient pas!'
-            );
-        }else{
+            $status = 401;
+            $message ='Le fichier ' .$id. ' ne vous appartient pas!';
+
+            return $this->json(['status' => $status,'message'=> $message]);
             
+        }else{
+        $status = 204;  
         /** @var UploadedFile $file */
         $file = $request->files->get('lien');
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -118,7 +128,7 @@ class FichierController extends AbstractController
         $entityManager->flush();
         }
        
-        return $this->json([['Fichier modifie avec success'], $fichier]);
+        return $this->json(['status' => $status,'message' =>'Fichier modifie avec success', 'details du fichier modifie'=>$fichier]);
     }
 
     /**
@@ -128,20 +138,25 @@ class FichierController extends AbstractController
     {
         $user_id = $request->get('user_id');
         $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
-
+        $status = 204;
         if (!$fichier) {
-            throw $this->createNotFoundException(
-                'Aucun fichier trouvé pour cet id : '.$id
-            );
+            $status = 404;
+            $message =  'Aucun fichier trouvé pour cet id : '.$id;
+            
+            return $this->json(['status'=>$status,'message'=> $message]);
+
        }elseif 
         ($fichier->getUtilisateur()->getId() != $user_id) {
-            throw $this->createNotFoundException(
-                'Le fichier ' .$id. ' ne vous appartient pas!'
-            );
+            $status = 401;
+            $message ='Le fichier ' .$id. ' ne vous appartient pas!';
+           
+            return $this->json(['status'=>$status,'message'=> $message]);
+
         }elseif($fichier->getVisible() === 'inactif'){
-            throw $this->createNotFoundException(
-                'Le fichier ' .$id. ' n\'existe pas!'
-            );
+            $status = 404;
+            $message =   'Le fichier ' .$id. ' n\'existe pas!';
+            
+            return $this->json(['status'=>$status,'message'=> $message]);
         }else{
             $fichier->setVisible(Fichier::VISIBLE_ARRAY['INACTIF']);
         }
@@ -150,30 +165,7 @@ class FichierController extends AbstractController
         $entityManager->flush();;
 
 
-        return $this->json(['Fichier '.$id. ' supprime avec success'], Response::HTTP_SEE_OTHER); 
+        return $this->json(['status' => $status,'message' =>'Fichier '.$id. ' supprime avec success'], Response::HTTP_SEE_OTHER); 
     }
-
-    
-    // /**
-    //  * @Route("/api/fichiers", name="fichier_index", methods={"GET"})
-    //  */
-    // public function index(FichierRepository $fichierRepository): Response
-    // {
-
-    //     return $this->json($fichierRepository->findAll(), 200);
-    // }
-
-    // /**
-    //  * @Route("/api/fichiers/{id}", name="fichier_show", methods={"GET"})
-    //  */
-    // public function show($id, Request $request): Response
-    // {
-    //     $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
-    //     if (!$fichier) {
-    //         throw $this->createNotFoundException(
-    //             'Aucun fichier trouvé pour cet id : '.$id
-    //         );
-    //     }
-    //     return $this->json($fichier, 200);
-    // }
+   
 }
