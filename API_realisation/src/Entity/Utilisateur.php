@@ -39,14 +39,12 @@ class Utilisateur implements UserInterface
 
     /**
      * @ORM\Column(type="json")
-     * @Groups("utilisateur:read")
      */
     private $roles = [];
 
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
-     * @Groups("utilisateur:read")
      */
     private $password;
 
@@ -88,17 +86,20 @@ class Utilisateur implements UserInterface
     private $updatedAt;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", nullable=true)
+     * @Groups("utilisateur:read")
      */
     private $token;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="datetime", length=255, nullable=true)
+     * @Groups("utilisateur:read")
      */
     private $startDate;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="datetime", length=255, nullable=true)
+     * @Groups("utilisateur:read")
      */
     private $endDate;
 
@@ -263,24 +264,24 @@ class Utilisateur implements UserInterface
         return $this;
     }
 
-    public function getStartDate(): ?string
+    public function getStartDate(): ?\DateTimeInterface 
     {
         return $this->startDate;
     }
 
-    public function setStartDate(?string $startDate): self
+    public function setStartDate(?\DateTimeInterface  $startDate): self
     {
         $this->startDate = $startDate;
 
         return $this;
     }
 
-    public function getEndDate(): ?string
+    public function getEndDate(): ?\DateTimeInterface 
     {
         return $this->endDate;
     }
 
-    public function setEndDate(?string $endDate): self
+    public function setEndDate(?\DateTimeInterface  $endDate): self
     {
         $this->endDate = $endDate;
 

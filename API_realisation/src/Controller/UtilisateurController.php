@@ -45,7 +45,7 @@ class UtilisateurController extends AbstractController
          
             $hash = $hasherPassword->hashPassword($utilisateur, $utilisateur->getPassword());
             $utilisateur->setPassword($hash);
-           
+        
             $em = $this->getDoctrine()->getManager();
             $em->persist($utilisateur);
             $em->flush();
@@ -102,46 +102,52 @@ class UtilisateurController extends AbstractController
     /**
      * @Route("/api/login", name="connexion_login", methods={"POST"})
      */
-    public function login(Request $request, UtilisateurRepository $userRepo): JsonResponse
+    public function login(Request $request, UtilisateurRepository $userRepo, UserPasswordHasherInterface $hasherPassword, EntityManagerInterface $em): JsonResponse
     {
-       
         $user = \json_decode($request->getContent(), true);
-        $email = $user['email'];
-        $utilisateur[0] = $userRepo->findOneBy(['Email'=>$email]);
-        
-        if($utilisateur[0]->getEmail() === $user['email'] || $utilisateur[0]->getPassword() === $user['password']){
-            $status = 400;
-            $message= 'Mauvaise requete, verifiez vos donnees!';
-
-            return $this->json(['Status'=> $status, 'message'=>$message]);
-        }else{
-            dd($token);
-            $client = HttpClient::create();
-            $status = 201;
-            $response = $client->request('POST', 'http://localhost:8000/api/generate_token', [
-                'headers' => [
-                    
-                    'Content-Type' => 'application/json'
-                ],
-                'json' => [
-                    'email' => $user['email'],
-                    'password' => $user['password'], 
-                ],
-            ]);
-            $token = $response->toArray();
-            
-        }
        
-        // $em = $this->getDoctrine()->getManager();
-        // $em->persist($token);
-        // $em->flush();
-        return $this->json(['Status'=>$status, 'Token'=>$token["token"],
-         'User'=>$utilisateur[0]->getEmail()
-                                // ->getNom()
-                                // ->getPrenom()
-                                // ->getTelephone()
-    ]);
+        $client = HttpClient::create();
+        
+        $response = $client->request('POST', 'http://localhost:8000/api/generate_token', [
+            'headers' => [
+                
+                'Content-Type' => 'application/json'
+            ],
+            'json' => [
+                'email' => $user['email'],
+                'password' => $user['password'], 
+            ],
+        ]);
+        $statusCode = $response->getStatusCode();
 
+        if($statusCode === 401){
+
+           $status = 401;
+           $message = 'Mauvaise identification, verifiez vos donnees!';
+           return $this->json(['status'=>$status, 'message'=>$message]);
+        }else{
+            $token = $response->toArray();
+            $status = 201;
+            $email = $user['email'];
+            $utilisateur = $userRepo->findOneBy(['Email'=>$email]);
+            $utilisateur->setToken($token["token"])
+                        ->setstartDate(new \DateTime())
+                        ->setendDate(new \DateTime('+1day'));
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($utilisateur);
+            $em->flush();
+            return $this->json(['status'=>$status, 'token'=>$token["token"],
+                    'debut'=>$utilisateur->getStartDate(),
+                    'fin'=>$utilisateur->getEndDate(),
+                    'user_email'=>$utilisateur->getEmail(),
+                    'user_name'=>$utilisateur->getNom(),
+                    'user_firstname'=>$utilisateur->getPrenom(),
+                    'user_phone'=>$utilisateur->getTelephone()
+            ]);        
+        }
+        
+      
     }
 
     /**
