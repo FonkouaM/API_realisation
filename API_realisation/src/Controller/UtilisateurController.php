@@ -8,7 +8,6 @@ use App\Repository\UtilisateurRepository;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-// use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpClient\CurlHttpClient;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,7 +33,7 @@ class UtilisateurController extends AbstractController
         
         $email = $requestData['email'];
 
-       $userData = $userRepo->findOneBy(['Email'=>$email]);
+       $userData = $userRepo->findOneBy(['email'=>$email]);
        $status = 201; 
 
        if(empty($userData))
@@ -42,10 +41,10 @@ class UtilisateurController extends AbstractController
             $jsonReceive = $request->getContent();
            
             $utilisateur = $serializer->deserialize($jsonReceive, Utilisateur::class, 'json');
-         
+            
             $hash = $hasherPassword->hashPassword($utilisateur, $utilisateur->getPassword());
             $utilisateur->setPassword($hash);
-        
+            
             $em = $this->getDoctrine()->getManager();
             $em->persist($utilisateur);
             $em->flush();
@@ -99,6 +98,14 @@ class UtilisateurController extends AbstractController
         return $this->json(['status' => $status, 'message' =>'Utilisateur supprime avec success'], Response::HTTP_SEE_OTHER);
     }
     
+     /**
+     * @Route("/api/generate_token", name="generate_token", methods="POST")
+     */
+    public function generateToken() //: JsonResponse
+    {
+        
+    }
+
     /**
      * @Route("/api/login", name="connexion_login", methods={"POST"})
      */
@@ -127,42 +134,48 @@ class UtilisateurController extends AbstractController
            return $this->json(['status'=>$status, 'message'=>$message]);
         }else{
             $token = $response->toArray();
+           
             $status = 201;
             $email = $user['email'];
-            $utilisateur = $userRepo->findOneBy(['Email'=>$email]);
+            $utilisateur = $userRepo->findOneBy(['email'=>$email]);
             $utilisateur->setToken($token["token"])
-                        ->setstartDate(new \DateTime())
-                        ->setendDate(new \DateTime('+1day'));
-
+                        ->setStartDate(new \DateTime())
+                        ->setEndDate(new \DateTime('+1day'));
+               
             $em = $this->getDoctrine()->getManager();
             $em->persist($utilisateur);
             $em->flush();
-            return $this->json(['status'=>$status, 'token'=>$token["token"],
-                    'debut'=>$utilisateur->getStartDate(),
-                    'fin'=>$utilisateur->getEndDate(),
+            return $this->json(['status'=>$status, 'token'=>'Bearer '.$token["token"],
                     'user_email'=>$utilisateur->getEmail(),
                     'user_name'=>$utilisateur->getNom(),
                     'user_firstname'=>$utilisateur->getPrenom(),
                     'user_phone'=>$utilisateur->getTelephone()
             ]);        
         }
-        
-      
     }
 
     /**
-     * @Route("/api/generate_token", name="generate_token", methods="POST")
+     * @Route("/api/logout", name="deconnexion_logout")
      */
-    public function generateToken() //: JsonResponse
+    public function logout(Request $request, UtilisateurRepository $userRepo, EntityManagerInterface $em): JsonResponse
     {
-        
-    }
+        $token = $request->headers->get('Authorization');
+        $status = 200;
 
-    /**
-     * @Route("/logout", name="app_logout")
-     */
-    public function logout(): void
-    {
-        throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
+        $utilisateur = $userRepo->findOneBy(['token'=>$token]);
+        if(empty($utilisateur)){
+            $etat = 400;
+            $message = 'Vous n\'avez jamais ete connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+        }
+        $utilisateur->setToken(null)
+                    ->setStartDate(null)
+                    ->setEndDate(null);
+                    
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($utilisateur);
+        $em->flush();
+
+        return $this->json(['status'=>$status, 'message'=>'Deconnexion valide']);
     }
 }

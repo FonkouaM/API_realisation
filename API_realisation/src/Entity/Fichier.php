@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use App\Repository\FichierRepository;
 use Gedmo\Mapping\Annotation as Gedmo;
-// use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\File;
 use Gedmo\Mapping\Annotation\Timestampable;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Symfony\Component\Serializer\Annotation\Groups;

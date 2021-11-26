@@ -27,11 +27,10 @@ class FichierController extends AbstractController
      */
     public function new(Request $request, UtilisateurRepository $utilisateurRepo, FichierRepository $fichierRepository, EntityManagerInterface $entityManager): Response
     {
-        $id = $request->get('id');
+        $user_id = $request->get('user_id');
+       
+        $utilisateur = $utilisateurRepo->findById(['user_id'=>$user_id]);
 
-        $utilisateur = $utilisateurRepo->findById(['id'=>$id]);
-
-    //    dd($utilisateur);
         /** @var UploadedFile $file */
         $file = $request->files->get('lien');
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -52,7 +51,6 @@ class FichierController extends AbstractController
         $entityManager->persist($fichier);
         $entityManager->flush();
        
-        // dd($fichier);
         return $this->json(['status' => $status,'message' =>'Fichier cree avec success', 'details du fichier'=>$fichier]);
     }
 
@@ -81,20 +79,19 @@ class FichierController extends AbstractController
             
             return $this->json(['status'=>$status,'message'=> $message]);
         }
-        // dd($fichier);
         return $this->json(['status' => $status,'message' =>$fichier]);
     }
 
     /**
      * @Route("/api/fichiers/edit/{id}", name="fichier_edit", methods={"POST","PUT"})
      */
-    public function edit( $id, FichierRepository $fichiersRepo, Request $request, UtilisateurRepository $utilisateurRepo, ValidatorInterface $validator): Response
+    public function edit($id, FichierRepository $fichiersRepo, Request $request, UtilisateurRepository $utilisateurRepo): Response
     {
-
         $user_id = $request->get('user_id');
+        
         $utilisateur = $utilisateurRepo->findById(['user_id'=>$user_id]);
         $fichier = $fichiersRepo->FichierUpdate($id);
-        // $errors = $validator->validate($fichier);
+      
         if (!$fichier) {
             $status = 404;
             $message =  'Aucun fichier trouvé pour cet id : '.$id;
@@ -104,7 +101,7 @@ class FichierController extends AbstractController
         }elseif 
         ($fichier[0]->getUtilisateur()->getId() != $user_id) {
             $status = 401;
-            $message ='Le fichier ' .$id. ' ne vous appartient pas!';
+            $message ='Le fichier ' .$id. ' ne vous appartient pas ! '.$user_id. 'Verifiez!!!';
 
             return $this->json(['status' => $status,'message'=> $message]);
             

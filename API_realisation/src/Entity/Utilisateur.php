@@ -35,7 +35,7 @@ class Utilisateur implements UserInterface
      * @Groups("utilisateur:read")
      * @Assert\NotBlank(message="Cet email existe deja")
      */
-    private $Email;
+    private $email;
 
     /**
      * @ORM\Column(type="json")
@@ -52,19 +52,19 @@ class Utilisateur implements UserInterface
      * @ORM\Column(type="string", length=255)
      * @Groups("utilisateur:read")
      */
-    private $Nom;
+    private $nom;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups("utilisateur:read")
      */
-    private $Prenom;
+    private $prenom;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
      * @Groups("utilisateur:read")
      */
-    private $Telephone;
+    private $telephone;
 
     /**
      * @ORM\OneToMany(targetEntity=Fichier::class, mappedBy="utilisateur", orphanRemoval=true)
@@ -86,7 +86,7 @@ class Utilisateur implements UserInterface
     private $updatedAt;
 
     /**
-     * @ORM\Column(type="string", nullable=true)
+     * @ORM\Column(type="text", nullable=true)
      * @Groups("utilisateur:read")
      */
     private $token;
@@ -115,12 +115,12 @@ class Utilisateur implements UserInterface
 
     public function getEmail(): ?string
     {
-        return $this->Email;
+        return $this->email;
     }
 
-    public function setEmail(string $Email): self
+    public function setEmail(string $email): self
     {
-        $this->Email = $Email;
+        $this->email = $email;
 
         return $this;
     }
@@ -132,7 +132,7 @@ class Utilisateur implements UserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->Email;
+        return (string) $this->email;
     }
 
     /**
@@ -140,7 +140,7 @@ class Utilisateur implements UserInterface
      */
     public function getUsername(): string
     {
-        return (string) $this->Email;
+        return (string) $this->email;
     }
 
     /**
@@ -199,36 +199,36 @@ class Utilisateur implements UserInterface
 
     public function getNom(): ?string
     {
-        return $this->Nom;
+        return $this->nom;
     }
 
-    public function setNom(string $Nom): self
+    public function setNom(string $nom): self
     {
-        $this->Nom = $Nom;
+        $this->nom = $nom;
 
         return $this;
     }
 
     public function getPrenom(): ?string
     {
-        return $this->Prenom;
+        return $this->prenom;
     }
 
-    public function setPrenom(string $Prenom): self
+    public function setPrenom(string $prenom): self
     {
-        $this->Prenom = $Prenom;
+        $this->prenom = $prenom;
 
         return $this;
     }
 
     public function getTelephone(): ?int
     {
-        return $this->Telephone;
+        return $this->telephone;
     }
 
-    public function setTelephone(?int $Telephone): self
+    public function setTelephone(?int $telephone): self
     {
-        $this->Telephone = $Telephone;
+        $this->telephone = $telephone;
 
         return $this;
     }
