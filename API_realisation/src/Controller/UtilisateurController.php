@@ -61,11 +61,19 @@ class UtilisateurController extends AbstractController
     /**
      * @Route("/api/utilisateurs/list", name="utilisateur_index", methods={"GET"})
      */
-    public function index(UtilisateurRepository $utilisateurRepo): Response
+    public function index(Request $request,UtilisateurRepository $utilisateurRepo): Response
     {
-        $utilisateur = $utilisateurRepo->findAll();
+        $token = $request->headers->get('Authorization');
         $status = 200;
 
+        $utilisateur = $utilisateurRepo->findOneBy(['token'=>$token]);
+        
+        if(empty($utilisateur)){
+            $etat = 400;
+            $message = 'Vous n\'êtes pas connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+        }
+        $utilisateur = $utilisateurRepo->findAll();
         for($i = 0; $i<=50; $i++){
             $utilisateurs[$i] = ([          
                         'user_id'=>$utilisateur[$i]->getId(),
@@ -84,13 +92,22 @@ class UtilisateurController extends AbstractController
     /**
      * @Route("/api/utilisateurs/list/{id}", name="utilisateur_show", methods={"GET"})
      */
-    public function show($id): Response
+    public function show($id,Request $request, UtilisateurRepository $userRepo): Response
     {
+        $token = $request->headers->get('Authorization');
+        $status = 200;
+
+        $user = $userRepo->findOneBy(['token'=>$token]);
         $utilisateur = $this->getDoctrine()->getRepository(Utilisateur::class)->find($id);
-        if (!$utilisateur) {
-            // throw $this->createNotFoundException(
+
+        if(empty($user)){
+            $etat = 400;
+            $message = 'Vous n\'êtes pas connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+        
+        }elseif (!$utilisateur) {
+           
             return $this->json(['status'=>404, 'message'=>'Aucun utilisateur trouvé pour cet id : '.$id]);
-            // );
         }
         $status = 200;
         $utilisateurs =[
@@ -106,21 +123,6 @@ class UtilisateurController extends AbstractController
     }
 
     /**
-     * @Route("/api/utilisateurs/{id}", name="utilisateur_delete", methods={"DELETE"})
-     */
-    public function delete(Request $request, Utilisateur $utilisateur): Response
-    {
-        $status = 204;
-        // if ($this->isCsrfTokenValid('delete'.$utilisateur->getId(), $request->request->get('_token'))) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($utilisateur);
-            $em->flush();
-        // }
-
-        return $this->json(['status' => $status, 'message' =>'Utilisateur supprime avec success'], Response::HTTP_SEE_OTHER);
-    }
-    
-     /**
      * @Route("/api/generate_token", name="generate_token", methods="POST")
      */
     public function generateToken() //: JsonResponse
@@ -162,13 +164,12 @@ class UtilisateurController extends AbstractController
             $utilisateur = $userRepo->findOneBy(['email'=>$email]);
             $utilisateur->setToken('Bearer '.$token["token"])
                         ->setStartDate(new \DateTime())
-                        ->setEndDate(new \DateTime('+1day'));
+                        ->setEndDate(new \DateTime('+15day'));
                
             $em = $this->getDoctrine()->getManager();
             $em->persist($utilisateur);
             $em->flush();
             return $this->json(['status'=>$status, 'token'=>'Bearer '.$token["token"],
-                    // 'Refresh_token'=>$
                     'user_email'=>$utilisateur->getEmail(),
                     'user_name'=>$utilisateur->getNom(),
                     'user_firstname'=>$utilisateur->getPrenom(),

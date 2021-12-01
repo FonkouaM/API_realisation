@@ -27,16 +27,20 @@ class FichierController extends AbstractController
      */
     public function new(Request $request, UtilisateurRepository $utilisateurRepo, FichierRepository $fichierRepository, EntityManagerInterface $entityManager): Response
     {
-        $user_id = $request->get('user_id');
-       
-        $utilisateur = $utilisateurRepo->findById(['user_id'=>$user_id]);
-
+        $token = $request->headers->get('Authorization');
+      
+        $utilisateur = $utilisateurRepo->findByToken(['Authorization'=>$token]);
+        if(empty($utilisateur)){
+            $etat = 400;
+            $message = 'Vous n\'êtes pas connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+        }
         /** @var UploadedFile $file */
         $file = $request->files->get('lien');
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $newFile = Urlizer::urlize($originalFilename).'-'.uniqid().'.'.$file->guessExtension();
         $destination = $this->getParameter('kernel.project_dir').'/public/files';
-      
+       
         $dest = '/files/';
         $file->move($destination, $newFile);
         $fichier = new Fichier();
@@ -45,7 +49,7 @@ class FichierController extends AbstractController
                 ->setLien($dest.$newFile)
                 ->setUtilisateur($utilisateur[0])
                 ->setVisible(Fichier::VISIBLE_ARRAY['ACTIF']);
-      
+    
         $status = 201;
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($fichier);
@@ -57,10 +61,20 @@ class FichierController extends AbstractController
     /**
      * @Route("/api/fichiers/show", name="fichier_show_visible", methods={"GET"})
      */
-    public function show_visible(FichierRepository $fichiersRepo): Response
+    public function show_visible(Request $request, UtilisateurRepository $utilisateurRepo, FichierRepository $fichiersRepo): Response
     {
-        $fichier = $fichiersRepo->selectFichiersVisible();
+        $token = $request->headers->get('Authorization');
+        $status = 200;
 
+        $utilisateur = $utilisateurRepo->findOneBy(['token'=>$token]);
+        
+        if(empty($utilisateur)){
+            $etat = 400;
+            $message = 'Vous n\'êtes pas connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+        }
+        $fichier = $fichiersRepo->selectFichiersVisible();
+        $status = 200;
         for($i = 0; $i<=16; $i++){
             $fichiers[$i] = array('fichier_id'=>$fichier[$i]->getId(),
                                 'fichierName'=>$fichier[$i]->getNom(),
@@ -75,18 +89,26 @@ class FichierController extends AbstractController
                                         'userPhone'=>$fichier[$i]->getUtilisateur()->getTelephone()
                                 ]);
         }
-            $status = 200;
+            
         return $this->json(['status' => $status,'message' =>$fichiers]);
     }
 
     /**
      * @Route("/api/fichiers/utilisateur/{id}", name="fichier_view_visible", methods={"GET"})
      */
-    public function view_visible(FichierRepository $fichiersRepo, $id): Response
+    public function view_visible(Request $request, UtilisateurRepository $utilisateurRepo, FichierRepository $fichiersRepo, $id): Response
     {
+        $token = $request->headers->get('Authorization');
+      
+        $utilisateur = $utilisateurRepo->findOneBy(['token'=>$token]);
         $fichier = $fichiersRepo->FichiersUtilisateur($id);
         $status = 200;
-        if (!$fichier) {
+        if(empty($token) || empty($utilisateur)){
+            $etat = 400;
+            $message = 'Vous n\'êtes pas connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+
+        }elseif (!$fichier) {
             $status = 404;
             $message =  'Aucun fichier trouvé pour cet id : '.$id;
             
@@ -114,21 +136,25 @@ class FichierController extends AbstractController
      */
     public function edit($id, FichierRepository $fichiersRepo, Request $request, UtilisateurRepository $utilisateurRepo): Response
     {
-        $user_id = $request->get('user_id');
+        $token = $request->headers->get('Authorization');
         
-        $utilisateur = $utilisateurRepo->findById(['user_id'=>$user_id]);
+        $utilisateur = $utilisateurRepo->findByToken(['Authorization'=>$token]);
         $fichier = $fichiersRepo->FichierUpdate($id);
-      
-        if (!$fichier) {
+       if(empty($token) || empty($utilisateur)){
+            $etat = 400;
+            $message = 'Vous n\'êtes pas connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+            
+        }elseif(!$fichier) {
             $status = 404;
             $message =  'Aucun fichier trouvé pour cet id : '.$id;
             
             return $this->json(['status'=>$status,'message'=> $message]);
 
         }elseif 
-        ($fichier[0]->getUtilisateur()->getId() != $user_id) {
+        ($fichier[0]->getUtilisateur()->getToken() != $token) {
             $status = 401;
-            $message ='Le fichier ' .$id. ' ne vous appartient pas ! '.$user_id. 'Verifiez!!!';
+            $message ='Le fichier ' .$id. ' ne vous appartient pas ! ';
 
             return $this->json(['status' => $status,'message'=> $message]);
             
@@ -144,8 +170,8 @@ class FichierController extends AbstractController
         $file->move($destination, $newFile);
         // $fichier = new Fichier();
         $fichier[0]->setNom($request->get('nom'))
-                ->setDescription($request->get('description'))
-                ->setLien($dest.$newFile);
+                   ->setDescription($request->get('description'))
+                   ->setLien($dest.$newFile);
           
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($fichier[0]);
@@ -158,19 +184,25 @@ class FichierController extends AbstractController
     /**
      * @Route("/api/fichiers/del/{id}", name="fichier_delete", methods={"POST", "DELETE"})
      */
-    public function delete($id, EntityManagerInterface $entityManager, Request $request): Response
+    public function delete($id, EntityManagerInterface $entityManager, Request $request, UtilisateurRepository $utilisateurRepo): Response
     {
-        $user_id = $request->get('user_id');
+        $token = $request->headers->get('Authorization');
         $fichier = $this->getDoctrine()->getRepository(Fichier::class)->find($id);
+        $utilisateur = $utilisateurRepo->findByToken(['Authorization'=>$token]);
         $status = 204;
-        if (!$fichier) {
+        if(empty($token) || empty($utilisateur)){
+            $etat = 400;
+            $message = 'Vous n\'êtes pas connecte!';
+            return $this->json(['status'=>$etat, 'message'=>$message]);
+            
+        }elseif(!$fichier) {
             $status = 404;
             $message =  'Aucun fichier trouvé pour cet id : '.$id;
             
             return $this->json(['status'=>$status,'message'=> $message]);
 
        }elseif 
-        ($fichier->getUtilisateur()->getId() != $user_id) {
+        ($fichier->getUtilisateur()->getToken() != $token) {
             $status = 401;
             $message ='Le fichier ' .$id. ' ne vous appartient pas!';
            
