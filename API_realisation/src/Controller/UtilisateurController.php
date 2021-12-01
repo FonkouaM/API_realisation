@@ -63,9 +63,22 @@ class UtilisateurController extends AbstractController
      */
     public function index(UtilisateurRepository $utilisateurRepo): Response
     {
-        $utilisateurs = $utilisateurRepo->findAll();
+        $utilisateur = $utilisateurRepo->findAll();
         $status = 200;
-       return $this->json(['status' => $status, 'message' => $utilisateurs]);
+
+        for($i = 0; $i<=50; $i++){
+            $utilisateurs[$i] = ([          
+                        'user_id'=>$utilisateur[$i]->getId(),
+                        'user_email'=>$utilisateur[$i]->getEmail(),
+                        'user_name'=>$utilisateur[$i]->getNom(),
+                        'user_firstname'=>$utilisateur[$i]->getPrenom(),
+                        'user_phone'=>$utilisateur[$i]->getTelephone(),
+                        'user_dateCreated'=>$utilisateur[$i]->getCreatedAt(),
+                        'user_dateUpdated'=>$utilisateur[$i]->getUpdatedAt(),
+            ]);
+        }
+       
+        return $this->json(['status' => $status, 'utilisateur' =>$utilisateurs]);
     }
     
     /**
@@ -80,7 +93,16 @@ class UtilisateurController extends AbstractController
             // );
         }
         $status = 200;
-       return $this->json(['status' => $status, 'message' => $utilisateur]);
+        $utilisateurs =[
+                    'user_id'=>$utilisateur->getId(),
+                    'user_email'=>$utilisateur->getEmail(),
+                    'user_name'=>$utilisateur->getNom(),
+                    'user_firstname'=>$utilisateur->getPrenom(),
+                    'user_phone'=>$utilisateur->getTelephone(),
+                    'user_dateCreated'=>$utilisateur->getCreatedAt(),
+                    'user_dateUpdated'=>$utilisateur->getUpdatedAt(),
+        ];
+        return $this->json(['status' => $status, 'utilisateur' =>$utilisateurs]);
     }
 
     /**
@@ -138,7 +160,7 @@ class UtilisateurController extends AbstractController
             $status = 201;
             $email = $user['email'];
             $utilisateur = $userRepo->findOneBy(['email'=>$email]);
-            $utilisateur->setToken($token["token"])
+            $utilisateur->setToken('Bearer '.$token["token"])
                         ->setStartDate(new \DateTime())
                         ->setEndDate(new \DateTime('+1day'));
                
@@ -146,6 +168,7 @@ class UtilisateurController extends AbstractController
             $em->persist($utilisateur);
             $em->flush();
             return $this->json(['status'=>$status, 'token'=>'Bearer '.$token["token"],
+                    // 'Refresh_token'=>$
                     'user_email'=>$utilisateur->getEmail(),
                     'user_name'=>$utilisateur->getNom(),
                     'user_firstname'=>$utilisateur->getPrenom(),

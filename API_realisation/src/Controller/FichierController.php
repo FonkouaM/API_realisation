@@ -60,10 +60,23 @@ class FichierController extends AbstractController
     public function show_visible(FichierRepository $fichiersRepo): Response
     {
         $fichier = $fichiersRepo->selectFichiersVisible();
-        
-        $status = 200;
 
-        return $this->json(['status' => $status,'message' =>$fichier]);
+        for($i = 0; $i<=16; $i++){
+            $fichiers[$i] = array('fichier_id'=>$fichier[$i]->getId(),
+                                'fichierName'=>$fichier[$i]->getNom(),
+                                'fichierDescription'=>$fichier[$i]->getDescription(),
+                                'fichierLink'=>$fichier[$i]->getLien(),
+                                'fichier_dateCreated'=>$fichier[$i]->getCreatedAt(),
+                                'fichier_dateUpdated'=>$fichier[$i]->getUpdatedAt(),
+                                'user'=>['userId'=>$fichier[$i]->getUtilisateur()->getId(),
+                                        'userEmail'=>$fichier[$i]->getUtilisateur()->getEmail(),
+                                        'userFirstName'=>$fichier[$i]->getUtilisateur()->getPrenom(),
+                                        'fichierName'=>$fichier[$i]->getUtilisateur()->getNom(),
+                                        'userPhone'=>$fichier[$i]->getUtilisateur()->getTelephone()
+                                ]);
+        }
+            $status = 200;
+        return $this->json(['status' => $status,'message' =>$fichiers]);
     }
 
     /**
@@ -79,7 +92,21 @@ class FichierController extends AbstractController
             
             return $this->json(['status'=>$status,'message'=> $message]);
         }
-        return $this->json(['status' => $status,'message' =>$fichier]);
+        for($i = 0; $i<3; $i++){
+            $fichiers[$i] = array('fichier_id'=>$fichier[$i]->getId(),
+                                'fichierName'=>$fichier[$i]->getNom(),
+                                'fichierDescription'=>$fichier[$i]->getDescription(),
+                                'fichierLink'=>$fichier[$i]->getLien(),
+                                'fichier_dateCreated'=>$fichier[$i]->getCreatedAt(),
+                                'fichier_dateUpdated'=>$fichier[$i]->getUpdatedAt(),
+                                'user'=>['userId'=>$fichier[$i]->getUtilisateur()->getId(),
+                                        'userEmail'=>$fichier[$i]->getUtilisateur()->getEmail(),
+                                        'userFirstName'=>$fichier[$i]->getUtilisateur()->getPrenom(),
+                                        'fichierName'=>$fichier[$i]->getUtilisateur()->getNom(),
+                                        'userPhone'=>$fichier[$i]->getUtilisateur()->getTelephone()
+                                ]);
+        }
+        return $this->json(['status' => $status,'message' =>$fichiers]);
     }
 
     /**

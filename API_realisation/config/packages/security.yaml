@@ -18,6 +18,10 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        refresh:
+            pattern:  ^/api/token/refresh
+            stateless: true
+            # anonymous: true
 
         login:
             pattern: ^/api/generate_token
@@ -53,6 +57,7 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         # - { path: ^/admin, roles: ROLE_ADMIN }
+        #  - { path: ^/api/token/refresh, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/generate_token, roles: ROLE_USER}
         - { path: ^/api/utilisateurs/list, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/utilisateurs/list/id, roles: IS_AUTHENTICATED_FULLY }
