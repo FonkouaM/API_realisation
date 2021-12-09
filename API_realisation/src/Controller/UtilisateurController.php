@@ -136,7 +136,16 @@ class UtilisateurController extends AbstractController
     public function login(Request $request, UtilisateurRepository $userRepo, UserPasswordHasherInterface $hasherPassword, EntityManagerInterface $em): JsonResponse
     {
         $user = \json_decode($request->getContent(), true);
-       
+        if(empty($user['email'])){
+            $status = 400;
+            $message = 'Veuillez entrer votre email!';
+            return $this->json(['status'=>$status, 'message'=>$message]);
+
+        }elseif (empty($user['password'])){
+            $status = 400;
+            $message = 'Veuillez entrer un mot de passe!';
+            return $this->json(['status'=>$status, 'message'=>$message]);
+        }
         $client = HttpClient::create();
         
         $response = $client->request('POST', 'http://localhost:8000/api/generate_token', [
@@ -154,7 +163,7 @@ class UtilisateurController extends AbstractController
         if($statusCode === 401){
 
            $status = 401;
-           $message = 'Mauvaise identification, verifiez vos donnees!';
+           $message = 'Vos identifiants sont incorrects';
            return $this->json(['status'=>$status, 'message'=>$message]);
         }else{
             $token = $response->toArray();
